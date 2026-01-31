@@ -1,145 +1,213 @@
 <?php
-session_start();
+declare(strict_types=1);
+
+require_once __DIR__ . '/../misc_security/secure-transport.php';
+require_once __DIR__ . '/../misc_security/session-hardening.php';
+require_once __DIR__ . '/../misc_security/sql-prevention.php';
+
+/* ===============================
+   Session init (safe)
+   - prevents ini_set warnings / double session_start
+================================ */
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    session_start();
+}
 
 /*
   ASSUMPTION:
   - After login, you set:
-    $_SESSION['user'] = username or employee_id
-    $_SESSION['role'] = 'staff' or 'supervisor' (or 'admin')
+    $_SESSION['user'] = username
+    $_SESSION['role'] = 'staff' | 'supervisor' | 'admin'
+    (optional) $_SESSION['auth'] = 1
 */
 
-// Not logged in -> kick out
-if (!isset($_SESSION['user']) || !isset($_SESSION['role'])) {
+/* =========================
+   SQLi detection (GET/POST)
+   ========================= */
+detect_sql_injection($_GET);
+detect_sql_injection($_POST);
+
+/* ===============================
+   ✅ URL Tampering Popup (SUPERVISOR DASHBOARD)
+   Requirements (same style as your staff-apply_leave.php):
+   1) If ?role=staff/admin/supervisor (ANY role param) => popup + clean reload
+   2) If any ID-like param present => popup + clean reload
+   3) If ANY unexpected query string keys appear (URL edited) => popup + clean reload
+   4) If someone tries to load this script under a different filename/path
+      => popup + redirect back to the correct sup-dashboard.php clean URL
+   Notes:
+   - We allow only: logout (GET) for this page.
+================================ */
+$EXPECTED_FILE = 'sup-dashboard.php';
+
+function supdash_clean_url(array $removeKeys = ['role','id','staff_id','employee_id','user_id']): string {
+    $query = $_GET;
+    foreach ($removeKeys as $k) unset($query[$k]);
+
+    $base = strtok($_SERVER['REQUEST_URI'], '?');
+    return $base . (count($query) ? ('?' . http_build_query($query)) : '');
+}
+
+function supdash_redirect_clean(bool $withPopup = true, ?string $forcePath = null): void {
+    if ($withPopup) {
+        $_SESSION['flash_unauth'] = 1;
+    }
+
+    $clean = supdash_clean_url();
+
+    if ($forcePath !== null) {
+        $qPos = strpos($clean, '?');
+        $qs   = ($qPos !== false) ? substr($clean, $qPos) : '';
+        header("Location: " . $forcePath . $qs);
+        exit;
+    }
+
+    header("Location: " . $clean);
+    exit;
+}
+
+/* =========================
+   AUTH CHECK
+   ========================= */
+if (!isset($_SESSION['user'], $_SESSION['role'])) {
     header("Location: amc_hr_gateway.php");
     exit;
 }
 
-$currentRole = strtolower($_SESSION['role']);      // trusted
-$urlRole     = isset($_GET['role']) ? strtolower(trim($_GET['role'])) : null;
+$username = (string)$_SESSION['user'];
+$role     = strtolower((string)$_SESSION['role']);
 
-// If role in URL is present and doesn't match session role -> tampering
-if ($urlRole !== null && $urlRole !== $currentRole) {
-    // Build same page URL WITHOUT the "role" parameter
-    $query = $_GET;
-    unset($query['role']);
-
-    $base = strtok($_SERVER["REQUEST_URI"], '?');
-    $cleanUrl = $base . (count($query) ? ('?' . http_build_query($query)) : '');
-
-    // Reload same page + popup
-    echo "<script>
-        alert('Unauthorised Access Detected');
-        window.location.replace(" . json_encode($cleanUrl) . ");
-    </script>";
-    exit;
+/* ===============================
+   Force correct filename if URL path is edited
+   (e.g. sup-dashboard.php changed to admin-dashboard.php in URL)
+================================ */
+$currentFile = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '');
+if ($currentFile !== '' && strtolower($currentFile) !== strtolower($EXPECTED_FILE)) {
+    supdash_redirect_clean(true, $EXPECTED_FILE);
 }
 
-// Database configuration
-$db_host = "localhost";
-$db_user = "root";
-$db_pass = "";
-$db_name = "swap";
-
-// Connect to database
-$mysqli = new mysqli($db_host, $db_user, $db_pass, $db_name);
-if ($mysqli->connect_error) {
-    die("Database connection failed: " . $mysqli->connect_error);
+/* ===============================
+   Detect ANY unexpected query keys (URL edited)
+   Allowed keys for this page: logout only
+================================ */
+$allowedKeys = ['logout'];
+foreach (array_keys($_GET) as $k) {
+    if (!in_array($k, $allowedKeys, true)) {
+        supdash_redirect_clean(true);
+    }
 }
 
-// Check if user is logged in and is a supervisor
-if (!isset($_SESSION['auth']) || !isset($_SESSION['user']) || !isset($_SESSION['role'])) {
-    header('Location: login.php');
-    exit;
+/* ===============================
+   Explicit tamper triggers (kept for clarity)
+================================ */
+if (isset($_GET['role'])) {
+    // ANY role param triggers popup (even if it matches)
+    supdash_redirect_clean(true);
+}
+if (isset($_GET['id']) || isset($_GET['staff_id']) || isset($_GET['employee_id']) || isset($_GET['user_id'])) {
+    supdash_redirect_clean(true);
 }
 
-// Verify user is a supervisor
-if ($_SESSION['role'] !== 'supervisor') {
+/* =========================
+   RBAC: supervisor only
+   ========================= */
+if ($role !== 'supervisor') {
     http_response_code(403);
-    die("Access Denied: This page is for supervisors only. Your role: " . $_SESSION['role']);
+    exit("Access Denied: This page is for supervisors only.");
 }
 
-// Get user information from session
-$username = $_SESSION['user'];
-$role = $_SESSION['role'];
+/* =========================
+   LOGOUT
+   ========================= */
+if (isset($_GET['logout'])) {
+    $_SESSION = [];
+    session_destroy();
+    header('Location: /AMC_Website/login.php');
+    exit;
+}
 
-// Get staff details for the logged-in user
-$stmt = $mysqli->prepare("
-    SELECT s.name, s.email, s.job_title, d.name as department_name
+/* =========================
+   FETCH SUPERVISOR DETAILS
+   ========================= */
+$me = db_one("
+    SELECT s.name, s.email, s.job_title, d.name AS department_name
     FROM users u
     JOIN staff s ON u.staff_id = s.id
     LEFT JOIN department d ON s.department_id = d.id
     WHERE u.username = ?
-");
-$stmt->bind_param("s", $username);
-$stmt->execute();
-$stmt->bind_result($staff_name, $email, $job_title, $department_name);
-$stmt->fetch();
-$stmt->close();
+", "s", [$username]);
 
-// Calculate Workforce Ready Percentage
-// Staff who have completed all required training and have no expired certifications
-$workforce_query = "
+$staff_name       = $me['name'] ?? $username;
+$email            = $me['email'] ?? '';
+$job_title        = $me['job_title'] ?? 'Supervisor';
+$department_name  = $me['department_name'] ?? '';
+
+/* =========================
+   METRICS (same logic as yours)
+   - Using prepared queries where needed
+   ========================= */
+
+/* Workforce ready percentage */
+$workforce_data = db_one("
     SELECT 
-        COUNT(DISTINCT s.id) as total_staff,
-        COUNT(DISTINCT CASE 
-            WHEN NOT EXISTS (
-                SELECT 1 FROM training_attendance ta
-                WHERE ta.staff_id = s.id AND ta.status = 'pending'
-            )
-            AND NOT EXISTS (
-                SELECT 1 FROM staff_certification sc
-                WHERE sc.staff_id = s.id AND sc.expiry_date < CURDATE()
-            )
-            THEN s.id 
-        END) as ready_staff
+        COUNT(*) AS total_staff,
+        SUM(
+            CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM workforce_ready wr
+                    WHERE wr.staff_id = s.id AND wr.is_ready = 1
+                ) THEN 1
+                WHEN NOT EXISTS (
+                    SELECT 1 FROM training_attendance ta
+                    WHERE ta.staff_id = s.id AND ta.status = 'pending'
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM staff_certification sc
+                    WHERE sc.staff_id = s.id AND sc.expiry_date < CURDATE()
+                ) THEN 1
+                ELSE 0
+            END
+        ) AS ready_staff
     FROM staff s
     WHERE s.status = 'active'
-";
-$result = $mysqli->query($workforce_query);
-$workforce_data = $result->fetch_assoc();
-$total_staff = $workforce_data['total_staff'] ?: 1;
-$ready_staff = $workforce_data['ready_staff'] ?: 0;
-$workforce_ready_percentage = round(($ready_staff / $total_staff) * 100);
+");
 
-// Count Training Due (pending training sessions)
-$training_due_query = "
-    SELECT COUNT(DISTINCT ta.id) as training_due
+$total_staff  = (int)($workforce_data['total_staff'] ?? 0);
+$ready_staff  = (int)($workforce_data['ready_staff'] ?? 0);
+if ($total_staff <= 0) $total_staff = 1;
+
+$workforce_ready_percentage = (int) round(($ready_staff / $total_staff) * 100);
+
+/* Training due (pending) */
+$training_data = db_one("
+    SELECT COUNT(DISTINCT ta.id) AS training_due
     FROM training_attendance ta
     WHERE ta.status = 'pending'
-";
-$result = $mysqli->query($training_due_query);
-$training_data = $result->fetch_assoc();
-$training_due = $training_data['training_due'] ?: 0;
+");
+$training_due = (int)($training_data['training_due'] ?? 0);
 
-// Count Expired Certifications
-$expired_certs_query = "
-    SELECT COUNT(*) as expired_certs
+/* Expired certifications */
+$cert_data = db_one("
+    SELECT COUNT(*) AS expired_certs
     FROM staff_certification
     WHERE expiry_date < CURDATE()
-";
-$result = $mysqli->query($expired_certs_query);
-$cert_data = $result->fetch_assoc();
-$expired_certs = $cert_data['expired_certs'] ?: 0;
+");
+$expired_certs = (int)($cert_data['expired_certs'] ?? 0);
 
-// Count Pending Leave Applications
-$pending_leave_query = "
-    SELECT COUNT(*) as pending_leave
+/* Pending leave applications */
+$leave_data = db_one("
+    SELECT COUNT(*) AS pending_leave
     FROM leave_application
     WHERE status = 'pending'
-";
-$result = $mysqli->query($pending_leave_query);
-$leave_data = $result->fetch_assoc();
-$pending_leave = $leave_data['pending_leave'] ?: 0;
+");
+$pending_leave = (int)($leave_data['pending_leave'] ?? 0);
 
-// Handle logout
-if (isset($_GET['logout'])) {
-    session_unset();
-    session_destroy();
-    header('Location: login.php');
-    exit;
-}
+/* ========= One-time modal flag ========= */
+$showUnauth = !empty($_SESSION['flash_unauth']);
+if ($showUnauth) unset($_SESSION['flash_unauth']);
 
-$mysqli->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -480,9 +548,33 @@ $mysqli->close();
         .metric-card:nth-child(2) { animation-delay: 0.2s; }
         .metric-card:nth-child(3) { animation-delay: 0.3s; }
         .metric-card:nth-child(4) { animation-delay: 0.4s; }
+
+        /* ===== Popup modal (same style reference) ===== */
+        .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+        .modal{width:min(520px,92vw);background:#0b1224;border:1px solid rgba(239,68,68,.5);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+        .modal-head{padding:14px 16px;background:rgba(239,68,68,.12);border-bottom:1px solid rgba(239,68,68,.25);font-weight:900;color:#fecaca}
+        .modal-body{padding:16px;color:#e2e8f0;line-height:1.5}
+        .modal-actions{padding:14px 16px;display:flex;justify-content:flex-end;border-top:1px solid rgba(71,85,105,.25)}
+        .modal-actions button{border-color:rgba(239,68,68,.55);background:rgba(239,68,68,.2);color:#fecaca;padding:10px 16px;border-radius:10px;border:1px solid rgba(239,68,68,.55);font-weight:800;cursor:pointer;transition:.2s}
+        .modal-actions button:hover{background:rgba(239,68,68,.28)}
     </style>
 </head>
 <body>
+
+    <!-- ===== Modal Popup (shows after tampering) ===== -->
+    <div class="modal-backdrop" id="unauthModal" <?php echo $showUnauth ? 'style="display:flex"' : ''; ?>>
+        <div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-head">⚠️Unauthorised Access Detected</div>
+            <div class="modal-body">
+                Your request was blocked because the URL looked modified (role/ID/query/path tampering).<br>
+                You have been returned to this page safely.
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="document.getElementById('unauthModal').style.display='none'">OK</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -531,13 +623,13 @@ $mysqli->close();
             <!-- Header -->
             <header class="header">
                 <div class="welcome-section">
-                    <h2>Welcome, <?php echo htmlspecialchars($staff_name ?? $username); ?></h2>
-                    <p><?php echo htmlspecialchars($job_title ?? 'Supervisor'); ?> <?php echo $department_name ? '• ' . htmlspecialchars($department_name) : ''; ?></p>
+                    <h2>Welcome, <?php echo htmlspecialchars($staff_name, ENT_QUOTES, 'UTF-8'); ?></h2>
+                    <p><?php echo htmlspecialchars($job_title, ENT_QUOTES, 'UTF-8'); ?> <?php echo $department_name ? '• ' . htmlspecialchars($department_name, ENT_QUOTES, 'UTF-8') : ''; ?></p>
                 </div>
                 <div class="header-actions">
                     <div class="user-info">
-                        <span><strong><?php echo htmlspecialchars($username); ?></strong></span>
-                        <span style="text-transform: capitalize;"><?php echo htmlspecialchars($role); ?></span>
+                        <span><strong><?php echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8'); ?></strong></span>
+                        <span style="text-transform: capitalize;"><?php echo htmlspecialchars($role, ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
                     <a href="?logout=1" class="logout-btn">Logout</a>
                 </div>
@@ -548,28 +640,28 @@ $mysqli->close();
                 <a href="sup-workforce_ready.php" class="metric-card-link">
                     <div class="metric-card green">
                         <div class="metric-title">Workforce Ready</div>
-                        <div class="metric-value"><?php echo $workforce_ready_percentage; ?>%</div>
+                        <div class="metric-value"><?php echo (int)$workforce_ready_percentage; ?>%</div>
                     </div>
                 </a>
 
                 <a href="sup-training_due.php" class="metric-card-link">
                     <div class="metric-card orange">
                         <div class="metric-title">Training Due</div>
-                        <div class="metric-value"><?php echo $training_due; ?></div>
+                        <div class="metric-value"><?php echo (int)$training_due; ?></div>
                     </div>
                 </a>
 
                 <a href="sup-expired_certs.php" class="metric-card-link">
                     <div class="metric-card red">
                         <div class="metric-title">Expired Certs</div>
-                        <div class="metric-value"><?php echo $expired_certs; ?></div>
+                        <div class="metric-value"><?php echo (int)$expired_certs; ?></div>
                     </div>
                 </a>
 
                 <a href="sup-pending_leave.php" class="metric-card-link">
                     <div class="metric-card blue">
                         <div class="metric-title">Pending Leave</div>
-                        <div class="metric-value"><?php echo $pending_leave; ?></div>
+                        <div class="metric-value"><?php echo (int)$pending_leave; ?></div>
                     </div>
                 </a>
             </div>
@@ -590,5 +682,13 @@ $mysqli->close();
             </section>
         </main>
     </div>
+
+    <?php
+      // keeps your existing library popups (e.g. SQLi) if your sql-prevention.php provides them
+      if (function_exists('render_security_popups')) {
+          render_security_popups();
+      }
+    ?>
+
 </body>
 </html>
