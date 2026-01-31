@@ -1,0 +1,79 @@
+[31-Jan-2026 14:08:55 Europe/Berlin] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 28
+[31-Jan-2026 14:08:57 Europe/Berlin] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 28
+[31-Jan-2026 14:11:08 Europe/Berlin] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 28
+[31-Jan-2026 14:11:12 Europe/Berlin] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 28
+[31-Jan-2026 14:23:33 Europe/Berlin] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 28
+[31-Jan-2026 14:29:17 Europe/Berlin] PHP Warning:  Undefined array key "csrf_token" in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-training_due.php on line 407
+[31-Jan-2026 14:29:18 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 14:55:05 Europe/Berlin] PHP Warning:  fopen(C:\xampp\htdocs\AMC_Website\staff_page/uploads/certs/Screenshot_2024-10-21_153027_1769867705_44a2cd19ad6281c7.png): Failed to open stream: No such file or directory in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 230
+[31-Jan-2026 14:55:05 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: fread(): Argument #1 ($stream) must be of type resource, bool given in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php:231
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(231): fread(false, 8)
+#1 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(351): saveUploadImagesOnlyHardened('supporting_doc')
+#2 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 231
+[31-Jan-2026 14:55:27 Europe/Berlin] PHP Warning:  fopen(C:\xampp\htdocs\AMC_Website\staff_page/uploads/certs/Screenshot_2024-10-21_153027_1769867727_c166a2cb7f218e18.png): Failed to open stream: No such file or directory in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 230
+[31-Jan-2026 14:55:27 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: fread(): Argument #1 ($stream) must be of type resource, bool given in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php:231
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(231): fread(false, 8)
+#1 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(351): saveUploadImagesOnlyHardened('supporting_doc')
+#2 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 231
+[31-Jan-2026 14:55:29 Europe/Berlin] PHP Warning:  fopen(C:\xampp\htdocs\AMC_Website\staff_page/uploads/certs/Screenshot_2024-10-21_153027_1769867729_c5f42b9b32dbd827.png): Failed to open stream: No such file or directory in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 230
+[31-Jan-2026 14:55:29 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: fread(): Argument #1 ($stream) must be of type resource, bool given in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php:231
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(231): fread(false, 8)
+#1 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(351): saveUploadImagesOnlyHardened('supporting_doc')
+#2 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 231
+[31-Jan-2026 14:56:21 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: saveUploadImagesOnly(): Argument #2 ($maxBytes) must be of type int, string given, called in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 223 and defined in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php:170
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(223): saveUploadImagesOnly('supporting_doc', 'uploads/certs')
+#1 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(352): saveUploadImagesOnlyHardened('supporting_doc')
+#2 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 170
+[31-Jan-2026 14:56:23 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: saveUploadImagesOnly(): Argument #2 ($maxBytes) must be of type int, string given, called in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 223 and defined in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php:170
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(223): saveUploadImagesOnly('supporting_doc', 'uploads/certs')
+#1 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(352): saveUploadImagesOnlyHardened('supporting_doc')
+#2 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 170
+[31-Jan-2026 14:56:58 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: saveUploadImagesOnly(): Argument #2 ($maxBytes) must be of type int, string given, called in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 223 and defined in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php:170
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(223): saveUploadImagesOnly('supporting_doc', 'uploads/certs')
+#1 C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php(352): saveUploadImagesOnlyHardened('supporting_doc')
+#2 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\staff_page\staff-apply_leave.php on line 170
+[31-Jan-2026 15:20:11 Europe/Berlin] PHP Warning:  Undefined array key "csrf_token" in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-training_due.php on line 407
+[31-Jan-2026 15:20:14 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 15:20:16 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 15:20:18 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 15:20:24 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 15:20:26 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 15:20:42 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 15:34:14 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: redirect_clean_url(): Argument #1 ($removeKeys) must be of type array, bool given, called in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 48 and defined in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php:289
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php(48): redirect_clean_url(true)
+#1 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php on line 289
+[31-Jan-2026 15:34:21 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: redirect_clean_url(): Argument #1 ($removeKeys) must be of type array, bool given, called in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 48 and defined in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php:289
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php(48): redirect_clean_url(true)
+#1 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php on line 289
+[31-Jan-2026 15:34:24 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: redirect_clean_url(): Argument #1 ($removeKeys) must be of type array, bool given, called in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 48 and defined in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php:289
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php(48): redirect_clean_url(true)
+#1 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php on line 289
+[31-Jan-2026 15:34:29 Europe/Berlin] PHP Fatal error:  Uncaught TypeError: redirect_clean_url(): Argument #1 ($removeKeys) must be of type array, bool given, called in C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php on line 48 and defined in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php:289
+Stack trace:
+#0 C:\xampp\htdocs\AMC_Website\staff_page\staff-dashboard.php(48): redirect_clean_url(true)
+#1 {main}
+  thrown in C:\xampp\htdocs\AMC_Website\misc_security\sql-prevention.php on line 289
+[31-Jan-2026 16:09:38 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 18
+[31-Jan-2026 16:12:13 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 117
+[31-Jan-2026 16:12:15 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 117
+[31-Jan-2026 16:12:21 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 117
+[31-Jan-2026 16:12:29 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 117
+[31-Jan-2026 16:12:36 Europe/Berlin] PHP Warning:  Header may not contain more than a single header, new line detected in C:\xampp\htdocs\AMC_Website\supervisor_page\sup-expired_certs.php on line 117
